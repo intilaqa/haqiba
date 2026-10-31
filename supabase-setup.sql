@@ -1,4 +1,7 @@
 -- حقيبة الجودة: إعداد Supabase (يُشغَّل مرة واحدة في SQL Editor)
+-- Copyright 2026 نعيمة سعيد الرشيدي
+-- @author نعيمة سعيد الرشيدي
+-- المؤلفة: نعيمة سعيد الرشيدي، وكُتبت الشفرة بمساعدة الذكاء الاصطناعي (AI) بتوجيهها ومراجعتها
 create table if not exists haqiba_rows (k text primary key, v jsonb, updated_at timestamptz not null default now(), updated_by text);
 create index if not exists haqiba_rows_upd on haqiba_rows(updated_at);
 create or replace function haqiba_touch() returns trigger language plpgsql as $$ begin new.updated_at = clock_timestamp(); return new; end $$;
