@@ -2,7 +2,6 @@
  * حقيبة الجودة
  * Copyright 2026 نعيمة سعيد الرشيدي
  * @author نعيمة سعيد الرشيدي
- * المؤلفة: نعيمة سعيد الرشيدي، وكُتبت الشفرة بمساعدة الذكاء الاصطناعي (AI) بتوجيهها ومراجعتها
  */
 const V="haqiba-v6-6";
 const LOCAL=["./","index.html","manifest.webmanifest","icons/icon-192.png","icons/icon-512.png","icons/maskable-512.png","icons/apple-touch-icon.png"];
