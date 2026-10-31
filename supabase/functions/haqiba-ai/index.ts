@@ -3,13 +3,14 @@
 // Deploy:  supabase functions deploy haqiba-ai
 // Secret:  supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-const DOMAIN = Deno.env.get("STAFF_DOMAIN") ?? "bu.edu.sa";
+const DOMAIN = Deno.env.get("STAFF_DOMAIN") ?? "your-university.edu.sa";
 const MODEL = Deno.env.get("AI_MODEL") ?? "claude-sonnet-5-5";
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const SYSTEM = `أنت «اسألي الحقيبة»، مساعد منسق الجودة في برنامج أكاديمي بجامعة سعودية يستعد للاعتماد البرامجي من المركز الوطني للتقويم والاعتماد الأكاديمي (هيئة تقويم التعليم والتدريب).
 - أجب بالعربية الفصحى المبسطة، باختصار ووضوح، وبخطوات عملية حين يلزم.
 - اعتمد أولاً على المقتطفات المرفقة من معايير المركز ووثائقه، وعلى بيانات البرنامج المرفقة (أرقام بلا أسماء). اذكر رقم المحك أو المؤشر أو النموذج حين تستشهد به.
-- إن لم تكفِ المقتطفات، قل ذلك صراحة وانصح بمراجعة أحدث أدلة المركز على موقع الهيئة؛ لا تختلق أرقام محكات أو مددا أو نسبا.
+- إن لم تجد الجواب في المقتطفات أو بيانات البرنامج أو معرفتك الموثوقة بأدلة المركز، أو كان السؤال خارج الجودة والاعتماد الأكاديمي، فأجب بهذه الجملة فقط: آسف، ليس لدي جواب لسؤالك.
+- لا تختلق أرقام محكات أو مددا أو نسبا.
 - لا تطلب ولا تذكر أسماء الطلاب أو أعضاء هيئة التدريس.`;
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });

@@ -4,7 +4,7 @@ create index if not exists haqiba_rows_upd on haqiba_rows(updated_at);
 create or replace function haqiba_touch() returns trigger language plpgsql as $$ begin new.updated_at = clock_timestamp(); return new; end $$;
 drop trigger if exists haqiba_touch on haqiba_rows;
 create trigger haqiba_touch before insert or update on haqiba_rows for each row execute function haqiba_touch();
-create or replace function haqiba_staff() returns boolean language sql stable as $$ select coalesce(auth.jwt()->>'email','') ilike '%@bu.edu.sa' $$;
+create or replace function haqiba_staff() returns boolean language sql stable as $$ select coalesce(auth.jwt()->>'email','') ilike '%@your-university.edu.sa' $$;
 alter table haqiba_rows enable row level security;
 drop policy if exists staff_all on haqiba_rows;
 create policy staff_all on haqiba_rows for all to authenticated using (haqiba_staff()) with check (haqiba_staff());
@@ -24,3 +24,7 @@ create policy resp_read on haqiba_responses for select to authenticated using (h
 insert into storage.buckets (id, name, public) values ('haqiba-files','haqiba-files', false) on conflict (id) do nothing;
 drop policy if exists haqiba_files on storage.objects;
 create policy haqiba_files on storage.objects for all to authenticated using (bucket_id = 'haqiba-files' and haqiba_staff()) with check (bucket_id = 'haqiba-files' and haqiba_staff());
+
+-- keep-alive: a tiny public function the GitHub workflow calls every 3 days so the free project never pauses
+create or replace function haqiba_ping() returns text language sql stable security definer set search_path = public as $$ select 'ok ' || (select count(*) from haqiba_public)::text $$;
+grant execute on function haqiba_ping() to anon, authenticated;
