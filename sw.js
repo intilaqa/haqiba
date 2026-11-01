@@ -2,8 +2,9 @@
  * حقيبة الجودة
  * Copyright 2026 نعيمة سعيد الرشيدي
  * @author نعيمة سعيد الرشيدي
+ * المؤلفة: نعيمة سعيد الرشيدي، وكُتبت الشفرة بمساعدة الذكاء الاصطناعي (AI) بتوجيهها ومراجعتها
  */
-const V="haqiba-v6-6";
+const V="haqiba-v6-9";
 const LOCAL=["./","index.html","manifest.webmanifest","icons/icon-192.png","icons/icon-512.png","icons/maskable-512.png","icons/apple-touch-icon.png"];
 const CDN=["https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js","https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js","https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js","https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js","https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"];
 const CACHE_HOSTS=["cdnjs","fonts.g","jsdelivr","tessdata"];

@@ -991,6 +991,8 @@ function vSettings(){const s=S(),f=(k,l,t="text")=>`<label style="display:grid;g
   return `<h1>الإعدادات</h1><p class="lead">تظهر هذه البيانات في رؤوس النماذج وأغلفة الاختبارات، وتُستخدم في الحسابات.</p>
   <div class="panel"><h2>بيانات المؤسسة والبرنامج</h2><div class="grid g3">${f("inst","المؤسسة")}${f("college","الكلية")}${f("dept","القسم العلمي")}${f("program","البرنامج")}${f("code","رمز البرنامج في التصنيف السعودي")}${f("qual","مستوى المؤهل")}${f("campus","المقر")}<label style="display:grid;gap:4px"><span class="note">مخاطبة مسؤول الجودة في التطبيق</span><select data-set="qg"><option value="f" ${s.qg!=="m"?"selected":""}>بصيغة المؤنث</option><option value="m" ${s.qg==="m"?"selected":""}>بصيغة المذكر</option></select></label>${f("campusM","مقر شطر الطلاب")}${f("campusF","مقر شطر الطالبات")}<label style="display:grid;gap:4px"><span class="note">الشطر الافتراضي للشعب الجديدة</span><select data-set="gender"><option ${s.gender==="طالبات"?"selected":""}>طالبات</option><option ${s.gender==="طلاب"?"selected":""}>طلاب</option></select></label></div></div>
   <div class="panel" style="margin-top:12px"><h2>الفصل والمستهدفات</h2><div class="grid g3">${f("year","العام الدراسي")}<label style="display:grid;gap:4px"><span class="note">الفصل الدراسي</span><select data-set="term">${["الأول","الثاني","الصيفي"].map(t=>`<option ${s.term===t?"selected":""}>${t}</option>`).join("")}</select></label>${f("target","النسبة المستهدفة لعدد الطلاب الذين حققوا النسبة المستهدفة (%)","number")}${f("scoreT","النسبة المستهدفة للدرجات (%)","number")}${f("pass","درجة النجاح","number")}</div>
+   <h3 style="margin:14px 0 6px">أوزان مجالات النواتج في مصفوفة المقرر</h3><div class="grid g3">${[["k","المعارف"],["s","المهارات"],["v","القيم"]].map(([k,l])=>`<label style="display:grid;gap:4px"><span class="note">${l} (%)</span><input type="number" min="0" max="100" data-dw="${k}" value="${DW()[k]}"></label>`).join("")}</div>
+   <p class="note" style="margin:6px 0 0">تُطبَّق على كل المقررات: وزن كل ناتج في المصفوفة والدرجة المقترحة له. المجموع الآن ${DW().k+DW().s+DW().v}%${DW().k+DW().s+DW().v===100?"":" (يجب أن يكون 100%)"}.</p>
    <p class="note" style="margin:10px 0 6px">النسبتان أعلاه هما القيمة الافتراضية، وتُعبّأ تلقائياً في كل مقرر لم تُحدَّد له مستهدفات خاصة. ولكل مقرر مستهدفاته في «توصيف المقرر ← مستهدفات قياس نواتج التعلم»${(()=>{const n=Object.keys(DB.ctg||{}).length;return n?` (${n} مقرراً لها مستهدفات خاصة)`:""})()}، وتُقرأ تلقائياً من ملف التوصيف أو الخطة الدراسية أو ملف المستهدفات.</p>
    <div class="row"><button class="btn sm" id="tgTpl">تنزيل مستهدفات المقررات (Excel)</button><label class="btn sm pri" for="tgUp">رفع ملف المستهدفات</label><input type="file" id="tgUp" accept=".xlsx,.xls,.csv" hidden></div></div>
   <div class="panel" style="margin-top:12px"><h2>البيانات</h2><p class="note">تُحفظ البيانات في متصفحك على هذا الجهاز. في النسخة الفعلية تكون في قاعدة بيانات مشتركة يصل إليها كل عضو من جهازه.</p><button class="btn danger" id="resetAll">إعادة البيانات التجريبية</button></div><div style="margin-top:12px">${sigCard("q","توقيع مسؤول الجودة / منسق البرنامج")}</div>${sbSettings()}${closeTermPanel()}`}
@@ -1771,6 +1773,7 @@ function bind(R){
   on("[data-r107del]","click",(e,b)=>{const i=+b.dataset.r107del,old=DB.rec107.splice(i,1)[0];dirty();render();toast("حُذفت التوصية",()=>{DB.rec107.splice(i,0,old);dirty();render()})});
   // settings
   {const tt=$("#tgTpl");if(tt)tt.onclick=exportTGTpl;const tu=$("#tgUp");if(tu)tu.onchange=async()=>{const f=tu.files[0];if(!f)return;try{const n=await importTGXlsx(f);dirty();render();toast(n?`حُدّثت مستهدفات ${n} مقرراً`:"لم أجد أعمدة «رمز المقرر» والنسب المستهدفة في الملف")}catch(x){toast("تعذرت القراءة: "+(x.message||x))}}}
+  on("[data-dw]","change",(e,el)=>{const d={...DW()};d[el.dataset.dw]=Math.max(0,Math.min(100,+el.value||0));S().domW=d;dirty();render();const t=d.k+d.s+d.v;toast(t===100?"حُفظت أوزان المجالات":"حُفظت، والمجموع "+t+"% ويجب أن يكون 100%")});
   on("[data-set]","change",(e,el)=>{const k=el.dataset.set;S()[k]=k==="target"||k==="scoreT"?Math.max(1,Math.min(100,+el.value||(k==="target"?70:65)))/100:k==="pass"?(+el.value||60):el.value;dirty();toast("حُفظت الإعدادات")});
   const ra=$("#resetAll");if(ra)ra.onclick=()=>{if(ra.dataset.arm!=="1"){ra.dataset.arm="1";ra.textContent="اضغطي مرة أخرى للتأكيد";return}DB=seedDB();migrateV4();Object.keys(SPEC_CACHE).forEach(k=>delete SPEC_CACHE[k]);Object.keys(GEN).forEach(k=>delete GEN[k]);dirty();toast("أُعيدت البيانات التجريبية");render()};
 }
@@ -2389,7 +2392,7 @@ function realSpec(id){
   const fe=id==="MIS1766",comps=fe?FE_COMP:r.comps;
   const DM={"1":"الامتحانات (اختبار قصير، امتحان نصفي ونهائي)","2":"الامتحانات، تقييم المشاريع والواجبات والعروض والتقارير (روبرك)","3":"تقييم المشاريع والواجبات والعروض والتقارير (روبرك)"};
   const clos=r.clos.map(c=>({...c,m:(!c.m||c.m==="الامتحانات، الواجبات والمشاريع")?DM[c.c[0]]:c.m}));
-  const o={clos,map:genMap(id,clos,comps),comps:JSON.parse(JSON.stringify(comps)),real:1,src:"spec",flags:cleanFlags(r.flags||[])};
+  const o={clos,map:genMap(id,clos,comps,true),comps:JSON.parse(JSON.stringify(comps)),real:1,src:"spec",flags:cleanFlags(r.flags||[])};
   if(fe){o.fe=true;o.sites=DETAIL.MIS1766.sites}
   return o;
 }
@@ -2444,13 +2447,33 @@ function mxTopicChanged(id,op,i){
   if(DB.mxman&&DB.mxman[id]){toast("تغيّرت أوزان الموضوعات. درجاتك المعدّلة يدوياً محفوظة؛ أعيدي توزيعها من «مصفوفة قياس النواتج» إن أردتِ");return}
   mxRegen(id,false);toast("أُعيد حساب أوزان الموضوعات ودرجات المصفوفة تلقائياً");
 }
-function cloWeights(id,clos){const T=mxTopics(id),L=mxLinks(id,clos,T),tot=T.reduce((a,t)=>a+t[1],0)||1,w=clos.map(()=>0);T.forEach((t,i)=>{const k=L[i].filter(Boolean).length;if(k)L[i].forEach((on,j)=>{if(on)w[j]+=t[1]/tot/k})});return w}
+function topicCloW(id,clos){const T=mxTopics(id),L=mxLinks(id,clos,T),tot=T.reduce((a,t)=>a+t[1],0)||1,w=clos.map(()=>0);T.forEach((t,i)=>{const k=L[i].filter(Boolean).length;if(k)L[i].forEach((on,j)=>{if(on)w[j]+=t[1]/tot/k})});return w}
+/* أوزان مجالات النواتج في كل المقررات (من الإعدادات): المعارف 30، المهارات 50، القيم 20 افتراضياً */
+const DOMW_DEF={k:30,s:50,v:20},DOMK={"1":"k","2":"s","3":"v"};
+const DW=()=>{const d=S().domW||{};return {k:d.k??DOMW_DEF.k,s:d.s??DOMW_DEF.s,v:d.v??DOMW_DEF.v}};
+/* وزن كل ناتج = وزن مجاله، ويُقسَم بين نواتج المجال الواحد حسب ساعات موضوعاتها. المجال الغائب يُوزَّع وزنه على الموجود */
+function cloWeights(id,clos){const base=topicCloW(id,clos),D=DW(),dom=clos.map(o=>DOMK[String(o.c)[0]]||"s"),has=[...new Set(dom)],tot=has.reduce((a,k)=>a+(+D[k]||0),0);
+  if(!(tot>0))return base;const w=clos.map(()=>0);
+  has.forEach(k=>{const ix=clos.map((_,i)=>i).filter(i=>dom[i]===k),b=ix.map(i=>base[i]),bs=b.reduce((a,x)=>a+x,0),W=(+D[k]||0)/tot;ix.forEach((i,n)=>w[i]=W*(bs>0?b[n]/bs:1/ix.length))});return w}
+/* توزيع وزن كل موضوع على نواتجه: مجموع الصف = وزن الموضوع، ومجموع العمود = وزن الناتج، بأعداد صحيحة */
+function topicCloGrid(R,C,L){const n=R.length,m=C.length,x=R.map((r,i)=>{const k=L[i].filter(Boolean).length;return L[i].map(on=>on&&k?r/k:0)});
+  for(let it=0;it<500;it++){for(let j=0;j<m;j++){const cs=x.reduce((a,row)=>a+row[j],0);if(cs>0)x.forEach(row=>row[j]*=C[j]/cs)}for(let i=0;i<n;i++){const rs=x[i].reduce((a,b)=>a+b,0);if(rs>0)x[i]=x[i].map(v=>v*R[i]/rs)}}
+  const g=x.map(r=>r.map(Math.floor)),rd=i=>R[i]-g[i].reduce((a,b)=>a+b,0),cd=j=>C[j]-g.reduce((a,r)=>a+r[j],0);
+  const cells=[];x.forEach((r,i)=>r.forEach((v,j)=>{if(L[i][j])cells.push([v-g[i][j],i,j])}));cells.sort((a,b)=>b[0]-a[0]);
+  cells.forEach(([,i,j])=>{if(rd(i)>0&&cd(j)>0)g[i][j]++});
+  // مسارات بديلة: نزيد خانة وننقص أخرى في العمود نفسه، حتى تتطابق المجاميع
+  for(let guard=0;guard<400;guard++){const i0=[...Array(n).keys()].find(i=>rd(i)>0);if(i0==null)break;
+    const prev={},Q=[["r",i0]],seen=new Set(["r"+i0]);let end=null;
+    while(Q.length&&end==null){const [t,a]=Q.shift();if(t==="r"){for(let j=0;j<m;j++)if(L[a][j]&&!seen.has("c"+j)){seen.add("c"+j);prev["c"+j]=["r",a];if(cd(j)>0){end=j;break}Q.push(["c",j])}}
+      else for(let i=0;i<n;i++)if(g[i][a]>0&&!seen.has("r"+i)){seen.add("r"+i);prev["r"+i]=["c",a];Q.push(["r",i])}}
+    if(end==null)break;let cur=["c",end];while(!(cur[0]==="r"&&cur[1]===i0)){const p=prev[cur[0]+cur[1]];if(cur[0]==="c")g[p[1]][cur[1]]++;else g[cur[1]][p[1]]--;cur=p}}
+  const ok=R.every((r,i)=>rd(i)===0)&&C.every((c,j)=>cd(j)===0);return {g,ok}}
 /* تقريب النسب بطريقة «أكبر البواقي» (Largest Remainder): الجزء الصحيح لكل نسبة، ثم يُوزَّع الفرق على أصحاب أكبر الكسور، فيبقى المجموع 100% بالضبط */
-function lrPct(fr,d=0){const u=100*10**d,sum=fr.reduce((a,b)=>a+(+b||0),0);if(!(sum>0))return fr.map(()=>(0).toFixed(d)+"%");
-  const total=Math.round(Math.min(1,sum)*u),parts=splitInt(total,fr.map(x=>+x||0));return parts.map(v=>(v/10**d).toFixed(d)+"%")}
+function lrPct(ws,d=0,share=1){const u=100*10**d,v=ws.map(x=>Math.max(0,+x||0)),sum=v.reduce((a,b)=>a+b,0);if(!(sum>0))return v.map(()=>(0).toFixed(d)+"%");
+  const parts=splitInt(Math.round(Math.max(0,Math.min(1,share))*u),v);return parts.map(x=>(x/10**d).toFixed(d)+"%")}
 function splitInt(total,ws){const S=ws.reduce((a,b)=>a+b,0)||1,raw=ws.map(x=>total*x/S),fl=raw.map(Math.floor);let rem=total-fl.reduce((a,b)=>a+b,0);raw.map((x,k)=>[x-fl[k],k]).sort((a,b)=>b[0]-a[0]).slice(0,rem).forEach(([,k])=>fl[k]++);return fl}
-function genMap(id,clos,comps){
-  const w=cloWeights(id,clos);
+function genMap(id,clos,comps,auto){
+  const w=auto?topicCloW(id,clos):cloWeights(id,clos);
   return comps.map(cp=>{const exam=isExamAct(cp.n);
     let el=clos.map((c,i)=>cloTakes(c,exam)?i:-1).filter(i=>i>=0);
     if(!el.length)el=clos.map((c,i)=>(exam?c.c[0]!=="3":c.c[0]==="3")?i:-1).filter(i=>i>=0);
@@ -2464,7 +2487,7 @@ const arWords=n=>{n=Math.round(n);if(n<20)return AR1[n];if(n===100)return "ما�
 function mxRegen(id,full){
   if(DB.mxman)delete DB.mxman[id];
   if(full){if(DB.mxtc)delete DB.mxtc[id];delete DB.specs[id];delete SPEC_CACHE[id]}
-  else{const sp=JSON.parse(JSON.stringify(specOf(id)));sp.map=genMap(id,sp.clos,compsOf(id));DB.specs[id]=sp}
+  {const sp=JSON.parse(JSON.stringify(specOf(id)));sp.map=genMap(id,sp.clos,compsOf(id));DB.specs[id]=sp}
   Object.keys(GEN).forEach(g=>{if(g.startsWith(id+"|"))delete GEN[g]});
 }
 function mxView(id){
@@ -2473,7 +2496,7 @@ function mxView(id){
   const prow=c.m||[],pc=PLOS.map(p=>p.c),measured=new Set(clos.filter((_,i)=>colT[i]>0).map(o=>o.plo)),expected=pc.filter((_,j)=>prow[j]);
   const missP=expected.filter(p=>!measured.has(p)),extraP=[...measured].filter(p=>p&&!expected.includes(p));
   const hd=clos.map(o=>`<th>${o.c}</th>`).join("");
-  const TW=lrPct(T.map(t=>t[1]),1),TW0=lrPct(T.map(t=>t[1]),0),wSum=w.reduce((a,b)=>a+b,0),CW=lrPct(w.map(x=>x/(wSum||1)*Math.min(1,wSum)),0);
+  const TW=lrPct(T.map(t=>t[1]),1),TW0=lrPct(T.map(t=>t[1]),0),wSum=w.reduce((a,b)=>a+b,0),CW=lrPct(w,0,wSum),GR=topicCloGrid(TW0.map(x=>parseInt(x)),CW.map(x=>parseInt(x)),L);
   const sheet=`<div id="mxsheet">
   <h2 class="mxh">مصفوفة قياس نواتج التعلم · <span dir="ltr">${c.code}</span> ${esc(c.name)}</h2>
   <h3 class="s">نواتج التعلم للمقرر وربطها بنواتج البرنامج</h3>
@@ -2482,14 +2505,17 @@ function mxView(id){
   <div class="tw"><table class="t"><tr><th>#</th><th>قائمة الموضوعات</th><th>ساعات الاتصال</th><th>الوزن</th></tr>${T.map((t,i)=>`<tr><td class="c num">${i+1}</td><td>${esc(t[0])}</td><td class="c num">${t[1]}</td><td class="c num">${TW[i]}</td></tr>`).join("")}<tr><th></th><th>المجموع</th><th class="num">${tot}</th><th>100%</th></tr></table></div>
   <h3 class="s">2. مصفوفة خطة المقرر: ما يغطيه كل موضوع من النواتج</h3>
   <div class="tw"><table class="t"><tr><th>الموضوع</th>${hd}<th>الوزن</th></tr>${T.map((t,i)=>`<tr><td>الموضوع ${i+1}</td>${clos.map((o,j)=>`<td class="c">${coord?`<input type="checkbox" data-tc="${i}-${j}" ${L[i][j]?"checked":""} aria-label="الموضوع ${i+1} ${o.c}">`:(L[i][j]?"√":"")}</td>`).join("")}<td class="c num">${TW0[i]}</td></tr>`).join("")}<tr><th>وزن كل ناتج</th>${CW.map(x=>`<th class="num">${x}</th>`).join("")}<th>${wSum<.999?pct(wSum,0):"100%"}</th></tr></table></div>
+  <h3 class="s">توزيع وزن كل موضوع على النواتج</h3>
+  <div class="tw"><table class="t"><tr><th>الموضوع</th>${hd}<th>المجموع</th></tr>${T.map((t,i)=>`<tr><td>الموضوع ${i+1}</td>${clos.map((o,j)=>`<td class="c num">${L[i][j]&&GR.g[i][j]?GR.g[i][j]:""}</td>`).join("")}<td class="c num">${TW0[i]}</td></tr>`).join("")}<tr><th>المجموع</th>${CW.map(x=>`<th class="num">${x}</th>`).join("")}<th>100%</th></tr></table></div>
+  ${GR.ok?"":`<p class="note noexport" style="margin:6px 0 0;color:#A8670F">لا يمكن أن تتطابق المجاميع مع هذا الربط. تأكدي في المصفوفة 2 أن كل موضوع معلَّم أمامه ناتج واحد على الأقل، وأن كل ناتج له وزن معلَّم أمام موضوع واحد على الأقل.</p>`}
   <h3 class="s">3. مصفوفة التقييم: درجات كل أداة على النواتج</h3>
   <div class="tw"><table class="t"><tr><th>أداة التقييم</th><th>الدرجة</th>${hd}<th>المجموع</th></tr>${cm.map((cp,j)=>{const s=sp.map[j].reduce((a,b)=>a+(+b||0),0);return `<tr><td>${esc(cp.n)}</td><td class="c num">${cp.m}</td>${clos.map((o,i)=>`<td class="c">${coord?`<input type="number" min="0" max="${cp.m}" value="${sp.map[j][i]||0}" data-map="${j}-${i}" aria-label="${esc(cp.n)} ${o.c}" class="mxin" lang="en" dir="ltr">`:(sp.map[j][i]||"")}</td>`).join("")}<td class="c num" style="${s===cp.m?"":"color:#B42318;font-weight:700"}">${s}</td></tr>`}).join("")}
    <tr><th>مجموع الناتج</th><th class="num">${G}</th>${colT.map(x=>`<th class="num">${x}</th>`).join("")}<th></th></tr>
-   ${(()=>{const d3=clos.map(o=>o.c[0]==="3"),cw=colT.reduce((a,x,i)=>a+(d3[i]?x:0),0),ex=splitInt(Math.max(0,G-cw),w.map((x,i)=>d3[i]?0:x)),E=clos.map((o,i)=>d3[i]?colT[i]:ex[i]);return `<tr><td class="lbl">الدرجة المقترحة حسب ساعات الموضوعات</td><td class="c num">${E.reduce((a,b)=>a+b,0)}</td>${E.map((v,i)=>{const d=Math.abs(v-colT[i]);return `<td class="c num" style="${!d3[i]&&d>5?"color:#A8670F;font-weight:700":""}" title="${d3[i]?"نواتج القيم تُقاس بالأعمال الأخرى":"وزن الناتج من ساعات موضوعاته"}">${v}</td>`}).join("")}<td></td></tr>`})()}</table></div><p class="note noexport" style="margin:6px 0 0">«الدرجة المقترحة حسب ساعات الموضوعات»: نصيب كل ناتج من درجات الاختبارات بحسب عدد ساعات الموضوعات المرتبطة به في المصفوفة 2، ونواتج القيم تأخذ درجات الأعمال الأخرى. للمقارنة فقط: إذا ابتعدت درجة ناتج عن المقترح أكثر من 5 تظهر باللون البرتقالي، فراجعي توزيع الأسئلة عليه. المجموع دائماً = 100.</p>
+   ${(()=>{const d3=clos.map(()=>false),E=splitInt(G,w.some(x=>x>0)?w:clos.map(()=>1));return `<tr><td class="lbl">الدرجة المقترحة حسب أوزان النواتج</td><td class="c num">${E.reduce((a,b)=>a+b,0)}</td>${E.map((v,i)=>{const d=Math.abs(v-colT[i]);return `<td class="c num" style="${!d3[i]&&d>5?"color:#A8670F;font-weight:700":""}" title="${d3[i]?"نواتج القيم تُقاس بالأعمال الأخرى":"وزن الناتج من ساعات موضوعاته"}">${v}</td>`}).join("")}<td></td></tr>`})()}</table></div><p class="note noexport" style="margin:6px 0 0">«الدرجة المقترحة حسب أوزان النواتج»: نصيب كل ناتج من الدرجة الكلية حسب وزن مجاله في الإعدادات (المعارف ${DW().k}٪، المهارات ${DW().s}٪، القيم ${DW().v}٪)، ويُقسَم وزن المجال بين نواتجه حسب ساعات موضوعاتها. للمقارنة فقط: إذا ابتعدت درجة ناتج عن المقترح أكثر من 5 تظهر باللون البرتقالي، فراجعي توزيع الأسئلة عليه. المجموع دائماً = 100.</p>
   ${fin>=0?`<h3 class="s">4. إرشادات صفحة غلاف الاختبار النهائي</h3><div class="tw"><table class="t"><tr><th>نواتج التعلم</th>${clos.filter((o,i)=>sp.map[fin][i]).map(o=>`<th>${o.c}</th>`).join("")}<th>المجموع</th></tr><tr><td class="lbl">أرقام الأسئلة التي تقيس الناتج</td>${clos.filter((o,i)=>sp.map[fin][i]).map(()=>"<td>#Q</td>").join("")}<td></td></tr><tr><td class="lbl">الدرجة الكلية رقماً</td>${clos.map((o,i)=>sp.map[fin][i]?`<td class="c num">${sp.map[fin][i]}</td>`:"").join("")}<td class="c num"><b>${cm[fin].m}</b></td></tr><tr><td class="lbl">الدرجة الكلية كتابةً</td>${clos.map((o,i)=>sp.map[fin][i]?`<td class="c">${arWords(sp.map[fin][i])}</td>`:"").join("")}<td class="c"><b>${arWords(cm[fin].m)}</b></td></tr></table></div>`:""}
   <table class="t sigt" style="margin-top:10px"><tr><td class="lbl">منسق المقرر</td><td>${esc(facName(DB.offer[id]?.coord))}</td><td class="lbl">التوقيع</td><td class="c" style="height:3.2em">${DB.offer[id]?sigImg(DB.offer[id].coord):""}</td></tr></table></div>`;
   return `${specSrcNote(id)}
-  <div class="toolbar"><button class="btn pri" id="mxDocx">${ico("doc")} تنزيل المصفوفة Word</button>${coord?`<button class="btn ${DB.mxman&&DB.mxman[id]?"pri":""}" id="mxRe">${DB.mxman&&DB.mxman[id]?"عدّلتِ الدرجات يدوياً · إعادة التوزيع حسب الأوزان":"إعادة توزيع الدرجات حسب أوزان الموضوعات"}</button><button class="btn" id="mxFull">إعادة التوليد الكامل من التوصيف</button>`:""}<span class="note">${coord?"عدّلي الموضوعات وساعاتها من تبويب «توصيف المقرر»، وعلّمي هنا ما يغطيه كل موضوع، ثم عدّلي الدرجات مباشرة.":"يعدّلها منسق المقرر."}</span></div>
+  <div class="toolbar"><button class="btn pri" id="mxDocx">${ico("doc")} تنزيل المصفوفة Word</button>${coord?`<button class="btn ${DB.mxman&&DB.mxman[id]?"pri":""}" id="mxRe">${DB.mxman&&DB.mxman[id]?"عدّلتِ الدرجات يدوياً · إعادة التوزيع حسب الأوزان":"إعادة توزيع الدرجات حسب أوزان النواتج"}</button><button class="btn" id="mxFull">إعادة التوليد الكامل من التوصيف</button>`:""}<span class="note">${coord?"عدّلي الموضوعات وساعاتها من تبويب «توصيف المقرر»، وعلّمي هنا ما يغطيه كل موضوع، ثم عدّلي الدرجات مباشرة.":"يعدّلها منسق المقرر."}</span></div>
   ${checksBox(id,"mx")}
   <article class="doc final mx" style="margin-top:10px"><div class="pad">${sheet}</div></article>`;
 }
@@ -2632,7 +2658,7 @@ function bindSpecEdit(R){
 
 /* ================= Supabase: shared database, files and public survey answers ================= */
 LIBS.supabase="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js";
-const SB_SPLIT=["offer","sec","rep","uploads","exam","files","specs","specx","specv","chat","resp","cext","ucol","sig","mxtc","elec","road","facKey","pdocs"];
+const SB_SPLIT=["offer","sec","rep","uploads","exam","files","specs","specx","specv","chat","resp","cext","ucol","sig","mxtc","elec","road","facKey","pdocs","ctg"];
 function sbCfg(){let c={};try{c=JSON.parse(localStorage.getItem("haqiba-sb")||"{}")||{}}catch(e){}const H=window.HAQIBA_CONFIG||{};return {url:H.supabaseUrl||c.url||"",key:H.supabaseKey||c.key||"",domain:H.emailDomain||c.domain||"",fixed:!!(H.supabaseUrl&&H.supabaseKey)}}
 let SB=null,SBUSER=null,SBST="off",SBLAST=null,SBH={},SBT=null,SBERR="",SBBUSY=false,SBFIRST=true;
 try{SBH=JSON.parse(localStorage.getItem("haqiba-sbh")||"{}")||{};SBLAST=localStorage.getItem("haqiba-sblast")||null}catch(e){}
@@ -3224,9 +3250,9 @@ function parseTP153({T,lines}){
   o.tg=tgFromCells(cells);
   return o;
 }
-function tgFromCells(cells){const out={},num=t=>{const m=AR_D(String(t||"")).match(/(\d+(?:\.\d+)?)\s*[%٪]?/);return m?pctIn(m[1]):null};
-  cells.forEach((c,i)=>{const x=String(c||"");let k=null;if(/المستهدفة\s*لعدد\s*الطلاب|نسبة\s*الطلاب\s*المستهدفة/.test(x))k="target";else if(/النسبة\s*المستهدفة\s*للدرجات|الدرجة\s*المستهدفة/.test(x))k="scoreT";if(!k||out[k]!=null)return;
-    const after=x.replace(/^[\s\S]*?(للدرجات|المستهدفة)\s*/,""),v=num(after.replace(/[^\d.٠-٩%٪]+/g," "))??num(cells[i+1]);if(v!=null)out[k]=v});return out}
+function tgFromCells(cells){const out={},only=t=>{const m=AR_D(String(t??"")).trim().match(/^(\d{1,3}(?:\.\d+)?)\s*[%٪]?$/);if(!m)return null;const n=+m[1];return n>=1&&n<=100?n/100:null};
+  cells.forEach((c,i)=>{const x=String(c||"");let k=null;if(/النسبة\s*المستهدفة\s*لعدد\s*الطلاب/.test(x))k="target";else if(/النسبة\s*المستهدفة\s*للدرجات/.test(x))k="scoreT";if(!k||out[k]!=null)return;
+    const tail=x.replace(/^[\s\S]*النسبة\s*المستهدفة(\s*لعدد\s*الطلاب\s*الذين\s*حققوا\s*النسبة\s*المستهدفة|\s*لعدد\s*الطلاب|\s*للدرجات)\s*[:：]?/,"").replace(/[()（）]/g,"").trim(),v=only(tail)??only(cells[i+1]);if(v!=null)out[k]=v});return out}
 function compK(n,i){return /نصفي|منتصف|midterm/i.test(n)?"mid":/نهائي|final/i.test(n)?"fin":"oth"+i}
 function applyTP153(id,o){
   const clos=o.clos.length?o.clos:specOf(id).clos.map(x=>({...x}));
@@ -3300,7 +3326,7 @@ function wzPreview(){const W=WZ;
    <div class="row"><button class="btn pri" id="wzApply" ${W.courses.length?"":"disabled"}>اعتماد وتحديث التطبيق</button><button class="btn" id="wzCancel">إلغاء</button></div></div>`}
 async function goLive(){
   try{const dl=await getDL();if(dl)await dl.save({filename:`نسخة احتياطية - حقيبة الجودة - ${today()}.json`,data:new Blob([JSON.stringify(DB)],{type:"application/json"})})}catch(e){}
-  const keep=["inst","college","dept","program","code","qual","campus","campusM","campusF","year","term","target","scoreT","pass","gender","qg"],s={};
+  const keep=["inst","college","dept","program","code","qual","campus","campusM","campusF","year","term","target","scoreT","pass","gender","qg","domW"],s={};
   keep.forEach(k=>s[k]=S()[k]);if(!DB.prog){["inst","college","dept","program","code"].forEach(k=>s[k]="")}
   DB={v:3,mode:"live",campN:1,demoNamed:1,settings:{...s,target:s.target||.7,scoreT:s.scoreT||.65,pass:s.pass||60,gender:s.gender||"طالبات"},faculty:[],offer:{},sec:{},specs:{},specx:{},specv:{},rep:{},exam:{},files:{},uploads:{},matrix:null,bind:{v158:{},ssr:{},docs:{},elig:{}},rec107:[],tasks:[],archive:[],evid:[],surveys:[],resp:{},v4:1,prog:null};
   migrateV4();applyProg();save();location.hash="wizard";render();toast("بدأ برنامج جديد؛ ابدئي برفع توصيف البرنامج");
@@ -3490,4 +3516,15 @@ sbInit();
  * @author نعيمة سعيد الرشيدي
  * المؤلفة: نعيمة سعيد الرشيدي، وكُتبت الشفرة بمساعدة الذكاء الاصطناعي (AI) بتوجيهها ومراجعتها
  */
-if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script></html>
+if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+/* توحيد شكل الأرقام في خانات الإدخال: بعض الأجهزة تعرض خانات الأرقام بالأرقام الهندية (٢٠) وبقية الجداول بالعربية (20).
+   تُحوَّل الخانات إلى نص رقمي يعرض 20، 30، 50 دائماً، وما يُكتب بالأرقام الهندية يُحوَّل تلقائياً، مع الإبقاء على الحد الأدنى والأعلى. */
+(function(){
+  const AD=v=>String(v).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/٫/g,".");
+  const fix=root=>{(root.querySelectorAll?root.querySelectorAll('input[type="number"]'):[]).forEach(i=>{const mn=i.getAttribute("min"),mx=i.getAttribute("max"),st=i.getAttribute("step");i.type="text";i.setAttribute("inputmode",st&&st!=="1"&&st!=="any"?"decimal":"numeric");i.setAttribute("lang","en");i.dir="ltr";i.classList.add("numin");if(mn!=null)i.dataset.nmin=mn;if(mx!=null)i.dataset.nmax=mx;i.value=AD(i.value)})};
+  const st=document.createElement("style");st.textContent="input.numin{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;min-width:0;text-align:center;font-variant-numeric:tabular-nums}";document.head.appendChild(st);
+  document.addEventListener("input",e=>{const i=e.target;if(!i.classList||!i.classList.contains("numin"))return;const v=AD(i.value).replace(/[^\d.\-]/g,"");if(v!==i.value)i.value=v},true);
+  document.addEventListener("change",e=>{const i=e.target;if(!i.classList||!i.classList.contains("numin")||i.value==="")return;let n=+AD(i.value);if(!isFinite(n))n=0;if(i.dataset.nmin!=null)n=Math.max(+i.dataset.nmin,n);if(i.dataset.nmax!=null)n=Math.min(+i.dataset.nmax,n);i.value=String(n)},true);
+  const go=()=>{fix(document);new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1){if(n.matches&&n.matches('input[type="number"]'))fix(n.parentNode||document);else fix(n)}}))).observe(document.body,{childList:true,subtree:true})};
+  if(document.body)go();else addEventListener("DOMContentLoaded",go);
+})();</script></html>
