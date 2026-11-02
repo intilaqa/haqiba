@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     if (!user?.email?.toLowerCase().endsWith("@" + DOMAIN)) return j({ error: "غير مصرح" }, 401);
     const { q, kb = [], ctx = {}, hist = [] } = await req.json();
     if (!q || String(q).length > 2000) return j({ error: "سؤال غير صالح" }, 400);
-    const msg = `سؤال المنسق: ${q}\n\nمقتطفات من معايير المركز ووثائقه:\n${(kb as string[]).slice(0, 10).map((k, i) => (i + 1) + ") " + k).join("\n")}\n\nبيانات البرنامج الآن (JSON):\n${JSON.stringify(ctx).slice(0, 6000)}`;
+    const msg = `سؤال المنسق: ${q}\n\nمقتطفات من معايير المركز ووثائقه:\n${(Array.isArray(kb) ? kb : []).slice(0, 10).map((k, i) => (i + 1) + ") " + k).join("\n")}\n\nبيانات البرنامج الآن (JSON):\n${JSON.stringify(ctx).slice(0, 6000)}`;
     let extra: Record<string, string> = {};
     try { extra = JSON.parse(Deno.env.get("AI_HEADERS") || "{}"); } catch { return j({ error: "AI_HEADERS ليست JSON صحيحة" }, 500); }
     if (!Deno.env.get("AI_URL") || !Deno.env.get("AI_KEY")) return j({ error: "لم تُضبط AI_URL و AI_KEY في Secrets" }, 500);
@@ -37,7 +37,8 @@ Deno.serve(async (req) => {
       headers: { "x-api-key": Deno.env.get("AI_KEY")!, "anthropic-version": "2023-06-01", "content-type": "application/json", ...extra },
       body: JSON.stringify({ model: Deno.env.get("AI_MODEL"), max_tokens: 1200, system: SYSTEM, messages: [...clean, { role: "user", content: msg }] }),
     });
-    const d = await r.json().catch(() => ({}));
+    // deno-lint-ignore no-explicit-any
+    const d: any = await r.json().catch(() => ({}));
     if (!r.ok) return j({ error: d?.error?.message ?? "AI error" }, 502);
     return j({ answer: (d.content ?? []).filter((c: { type: string }) => c.type === "text").map((c: { text: string }) => c.text).join("\n") });
   } catch (e) { return j({ error: String(e) }, 500); }

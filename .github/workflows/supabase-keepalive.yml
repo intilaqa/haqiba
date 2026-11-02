@@ -1,0 +1,33 @@
+# حقيبة الجودة
+# Copyright 2026 نعيمة سعيد الرشيدي
+# @author نعيمة سعيد الرشيدي
+# المؤلفة: نعيمة سعيد الرشيدي، وكُتبت الشفرة بمساعدة الذكاء الاصطناعي (AI) بتوجيهها ومراجعتها
+# يُبقي مشروع Supabase المجاني نشطاً: يطرق قاعدة البيانات كل 3 أيام (المجاني يتوقف بعد 7 أيام بلا نشاط)
+name: supabase-keepalive
+on:
+  schedule:
+    - cron: "17 3 */3 * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        env:
+          SB_URL: ${{ secrets.SUPABASE_URL }}
+          SB_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          code=$(curl -s -o /tmp/r.txt -w "%{http_code}" -X POST "$SB_URL/rest/v1/rpc/haqiba_ping" -H "apikey: $SB_KEY" -H "Authorization: Bearer $SB_KEY" -H "Content-Type: application/json" -d '{}')
+          echo "HTTP $code: $(cat /tmp/r.txt)"
+          test "$code" = "200"
+      - uses: actions/checkout@v4
+      # GitHub يوقف الجدولة في المستودع الذي لا نشاط فيه 60 يوماً؛ تحديث صغير شهري يمنع ذلك
+      - name: Monthly heartbeat
+        run: |
+          if [ "$(date +%d)" -le 03 ]; then
+            date -u > .github/keepalive.txt
+            git config user.name "haqiba-bot"; git config user.email "haqiba-bot@users.noreply.github.com"
+            git add .github/keepalive.txt && git commit -m "keepalive $(date -u +%F)" && git push || true
+          fi
