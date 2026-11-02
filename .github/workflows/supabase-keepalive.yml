@@ -23,7 +23,7 @@ jobs:
             echo "قاعدة البيانات غير مربوطة بعد (لا توجد SUPABASE_URL و SUPABASE_ANON_KEY في Secrets)؛ لا شيء لإبقائه نشطاً."
             exit 0
           fi
-          code=$(curl -s -o /tmp/r.txt -w "%{http_code}" -X POST "$SB_URL/rest/v1/rpc/haqiba_ping" -H "apikey: $SB_KEY" -H "Authorization: Bearer $SB_KEY" -H "Content-Type: application/json" -d '{}')
+          code=$(curl -s -o /tmp/r.txt -w "%{http_code}" -X POST "$SB_URL/rest/v1/rpc/haqiba_ping" -H "apikey: $SB_KEY" -H "Content-Type: application/json" -d '{}')
           echo "HTTP $code: $(cat /tmp/r.txt)"
           test "$code" = "200"
       - uses: actions/checkout@v4

@@ -2736,6 +2736,7 @@ function vSbLogin(){const c=sbCfg();
   return `<div class="login"><div class="hero"><svg class="big" viewBox="0 0 64 64" aria-hidden="true">${logoSVG()}</svg><div><h1>حقيبة الجودة</h1><p>${esc(S().program)} · ${esc(S().college)} · ${esc(S().inst)}</p></div></div>
   <div class="panel" style="max-width:520px;margin:0 auto"><h2>الدخول بالبريد الجامعي</h2><p class="note" style="margin-top:-6px">نرسل رابط دخول إلى بريدك${c.domain?` (@${esc(c.domain)})`:""}. بعد الدخول تُحفظ بياناتك في قاعدة البيانات المشتركة، ويراها الأعضاء من أي جهاز.</p>
   <form class="qadd" id="sblogin"><input type="email" id="sb-email" placeholder="name@${esc(c.domain||"your-university.edu.sa")}" required dir="ltr" aria-label="البريد الجامعي"><button class="btn pri">أرسلي رابط الدخول</button></form><p class="note" id="sb-msg" aria-live="polite"></p>
+  <form class="qadd" id="sbcode" hidden><input id="sb-code" inputmode="numeric" autocomplete="one-time-code" placeholder="الرمز المرسل إلى بريدك" dir="ltr" aria-label="رمز الدخول" maxlength="10"><button class="btn pri">دخول بالرمز</button></form>
   <p class="note">أو <button class="btn sm" id="sb-local">أكملي بدون مزامنة على هذا الجهاز</button></p></div></div>`}
 let SBCHK=null;
 async function sbCheck(){
@@ -2770,7 +2771,12 @@ function bindSb(R){
   const f=$("#sblogin");if(f)f.onsubmit=async e=>{e.preventDefault();const em=$("#sb-email").value.trim(),c=sbCfg(),m=$("#sb-msg");
     if(c.domain&&!em.toLowerCase().endsWith("@"+c.domain.toLowerCase())){m.textContent=`استخدمي بريدك الجامعي (@${c.domain})`;return}
     m.textContent="جارٍ الإرسال…";const {error}=await SB.auth.signInWithOtp({email:em,options:{emailRedirectTo:location.href.split("#")[0]}});
-    m.textContent=error?("تعذر الإرسال: "+error.message):"أرسلنا رابط الدخول إلى بريدك. افتحيه من هذا الجهاز."};
+    m.textContent=error?("تعذر الإرسال: "+error.message):"أرسلنا رسالة إلى بريدك: افتحي الرابط من هذا الجهاز، أو اكتبي الرمز الذي فيها هنا.";
+    const cf=$("#sbcode");if(cf&&!error){cf.hidden=false;cf.dataset.em=em;$("#sb-code").focus()}};
+  const cf=$("#sbcode");if(cf)cf.onsubmit=async e=>{e.preventDefault();const m=$("#sb-msg"),code=String($("#sb-code").value).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/\D/g,"");
+    if(code.length<6){m.textContent="اكتبي الرمز كاملاً كما وصلك";return}
+    m.textContent="جارٍ التحقق…";const {error}=await SB.auth.verifyOtp({email:cf.dataset.em,token:code,type:"email"});
+    m.textContent=error?("الرمز غير صحيح أو انتهت صلاحيته؛ أعيدي الإرسال"):"تم الدخول"};
   const lo=$("#sb-local");if(lo)lo.onclick=()=>{try{sessionStorage.setItem("haqiba-local","1")}catch(e){}render()};
   const sv=$("#sb-save");if(sv)sv.onclick=()=>{try{localStorage.setItem("haqiba-sb",JSON.stringify({url:$("#sb-url").value.trim(),key:$("#sb-key").value.trim(),domain:$("#sb-dom").value.trim().replace(/^@/,"")}))}catch(e){}toast("حُفظ؛ جارٍ الاتصال…");sbInit()};
   const pa=$("#sb-pushall");if(pa)pa.onclick=async()=>{toast("جارٍ رفع كل البيانات…");await sbPush(true);toast(SBST==="ok"?"رُفعت كل البيانات":"تعذر الرفع: "+SBERR);render()};
